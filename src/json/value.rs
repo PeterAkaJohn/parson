@@ -12,6 +12,18 @@ pub enum Value {
     Array(Vec<Value>),
 }
 
+impl TryFrom<Value> for i64 {
+    type Error = ParsingError;
+    fn try_from(value: Value) -> Result<Self, Self::Error> {
+        match value {
+            Value::Number(Number::Float(number)) => Ok(number as i64),
+            _ => Err(ParsingError {
+                message: format!("Cannot convert {:?} to f64", value),
+            }),
+        }
+    }
+}
+
 impl TryFrom<Value> for f64 {
     type Error = ParsingError;
     fn try_from(value: Value) -> Result<Self, Self::Error> {
@@ -54,7 +66,7 @@ impl TryFrom<Value> for HashMap<String, Value> {
         match value {
             Value::Object(object) => Ok(object),
             _ => Err(ParsingError {
-                message: format!("Cannot convert {:?} to boolean", value),
+                message: format!("Cannot convert {:?} to Hashmap", value),
             }),
         }
     }
@@ -66,7 +78,7 @@ impl TryFrom<Value> for Vec<Value> {
         match value {
             Value::Array(array) => Ok(array),
             _ => Err(ParsingError {
-                message: format!("Cannot convert {:?} to boolean", value),
+                message: format!("Cannot convert {:?} to Vec", value),
             }),
         }
     }
