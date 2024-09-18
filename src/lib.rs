@@ -8,6 +8,7 @@ pub struct ParsingError {
 
 pub type ParsonResult<T> = Result<T, ParsingError>;
 
+#[derive(Debug)]
 pub struct Parson {}
 
 impl Parson {
