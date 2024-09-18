@@ -4,7 +4,7 @@ mod value;
 use std::{collections::HashMap, iter::Peekable};
 
 use token::{Token, Tokenizer};
-use value::Value;
+pub use value::Value;
 
 use crate::{ParsingError, ParsonResult};
 

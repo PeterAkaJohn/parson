@@ -1,5 +1,5 @@
 mod json;
-use json::JsonParser;
+use json::{JsonParser, Value};
 
 #[derive(Debug, Clone)]
 pub struct ParsingError {
@@ -8,8 +8,11 @@ pub struct ParsingError {
 
 pub type ParsonResult<T> = Result<T, ParsingError>;
 
-pub struct Parson {
-    json: JsonParser,
-}
+pub struct Parson {}
 
-impl Parson {}
+impl Parson {
+    pub fn parse_json(json_string: &str) -> ParsonResult<Value> {
+        let json_parser = JsonParser::new(json_string)?;
+        json_parser.parse()
+    }
+}
