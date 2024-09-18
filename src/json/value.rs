@@ -86,6 +86,8 @@ impl TryFrom<Value> for Vec<Value> {
 
 #[cfg(test)]
 mod tests {
+    use std::collections::HashMap;
+
     use crate::{json::token::Number, ParsonResult};
 
     use super::Value;
@@ -107,5 +109,20 @@ mod tests {
         let value: ParsonResult<String> = Value::String("amazing".to_string()).try_into();
         assert!(value.is_ok());
         assert_eq!(value.unwrap(), "amazing".to_string());
+
+        let value: ParsonResult<Vec<Value>> =
+            Value::Array(vec![Value::Boolean(false), Value::Boolean(true)]).try_into();
+        assert!(value.is_ok());
+        assert_eq!(value.unwrap().len(), 2);
+
+        let value: ParsonResult<HashMap<String, Value>> =
+            Value::Object(HashMap::from([("test".to_string(), Value::Boolean(true))])).try_into();
+
+        assert!(value.is_ok());
+        let unwrapped_value = value.unwrap();
+        assert_eq!(unwrapped_value.keys().len(), 1);
+        assert!(unwrapped_value
+            .get("test")
+            .is_some_and(|k| matches!(k, Value::Boolean(true))));
     }
 }
