@@ -83,3 +83,29 @@ impl TryFrom<Value> for Vec<Value> {
         }
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use crate::{json::token::Number, ParsonResult};
+
+    use super::Value;
+
+    #[test]
+    fn test_conversions() {
+        let value = bool::try_from(Value::Boolean(false));
+        assert!(value.is_ok());
+        assert!(!value.unwrap());
+
+        let value = f64::try_from(Value::Number(Number::Float(32.2)));
+        assert!(value.is_ok());
+        assert_eq!(value.unwrap(), 32.2);
+
+        let value = i64::try_from(Value::Number(Number::Float(32.2)));
+        assert!(value.is_ok());
+        assert_eq!(value.unwrap(), 32);
+
+        let value: ParsonResult<String> = Value::String("amazing".to_string()).try_into();
+        assert!(value.is_ok());
+        assert_eq!(value.unwrap(), "amazing".to_string());
+    }
+}
