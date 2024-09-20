@@ -175,8 +175,31 @@ mod tests {
         let tokens = Tokenizer::parse_tokens(BufReader::new(csv_string.as_bytes()));
         assert!(tokens.is_ok());
         let tokens = tokens.unwrap();
-
         assert_eq!(tokens.len(), 2);
+        let token = tokens[1][0].clone();
+        let token_value = if let Token::String(t) = token {
+            t
+        } else {
+            "".to_string()
+        };
+        assert_eq!(token_value, "val1".to_string());
+    }
+
+    #[test]
+    fn tokenize_bool() {
+        let csv_string = "test1,test2,num1,num2,condition\n\"val1\",val2,2,3.4,true";
+        let tokens = Tokenizer::parse_tokens(BufReader::new(csv_string.as_bytes()));
+        assert!(tokens.clone().is_ok_and(|tok| tok.len() == 2));
+        let tokens = tokens.unwrap();
+        let token = tokens[1][4].clone();
+        assert!(matches!(token, Token::Boolean(true)));
+
+        let csv_string = "test1,test2,num1,num2,condition\n\"val1\",val2,2,3.4,\"true\"";
+        let tokens = Tokenizer::parse_tokens(BufReader::new(csv_string.as_bytes()));
+        assert!(tokens.clone().is_ok_and(|tok| tok.len() == 2));
+        let tokens = tokens.unwrap();
+        let token = tokens[1][4].clone();
+        assert!(matches!(token, Token::Boolean(true)))
     }
 
     #[test]
