@@ -6,61 +6,68 @@ use std::{
     io::{BufRead, BufReader},
 };
 
+use token::{Token, Tokenizer};
 pub use value::Value;
 
 use crate::{ParsingError, ParsonResult};
 
-pub struct CsvParser<'a> {
-    reader: BufReader<&'a [u8]>,
+pub struct CsvParser {
+    tokenizer: Tokenizer,
 }
 
-impl<'a> CsvParser<'a> {
-    pub fn new(buf: &'a [u8]) -> ParsonResult<Self> {
+impl TryFrom<&Token> for String {
+    type Error = ParsingError;
+
+    fn try_from(value: &Token) -> Result<Self, Self::Error> {
+        match value {
+            Token::String(string) => Ok(string.to_string()),
+            _ => Err(ParsingError {
+                message: format!("token {:#?} is not a string and it should be", value),
+            }),
+        }
+    }
+}
+
+impl CsvParser {
+    pub fn new(buf: &[u8]) -> ParsonResult<Self> {
         let bufread = BufReader::new(buf);
-        Ok(Self { reader: bufread })
+        Ok(Self {
+            tokenizer: Tokenizer::new(bufread)?,
+        })
     }
 
-    pub fn parse(self) -> ParsonResult<Vec<HashMap<String, Value>>> {
+    pub fn parse(&self) -> ParsonResult<Vec<HashMap<String, Token>>> {
         let mut value = vec![];
 
-        let mut header = vec![];
+        let mut header: Vec<String> = vec![];
 
-        for (idx, line) in self.reader.lines().enumerate() {
-            let line = line.map_err(|_| ParsingError {
-                message: "failed to read line when parsing json".to_string(),
-            })?;
-
+        for (idx, line) in self.tokenizer.tokens.iter().enumerate() {
             match idx {
                 0 => {
                     // this is the header
-                    let splitvalue = line.split(',');
-                    header = splitvalue.map(|val| val.to_string()).collect::<_>()
+                    // all row items must be strings
+                    if line.iter().any(|item| !matches!(*item, Token::String(..))) {
+                        return Err(ParsingError {
+                            message: "header items must all be strings".to_string(),
+                        });
+                    }
+                    header = line
+                        .iter()
+                        .filter(|t| matches!(t, Token::String(..)))
+                        .map(|val| val.try_into())
+                        .collect::<ParsonResult<Vec<String>>>()?;
                 }
                 _ => {
                     let row_values = line
-                        .split(',')
+                        .iter()
                         .zip(&header)
-                        .map(|(value, col)| {
-                            let value = if value.eq("null") {
-                                Value::Null
-                            } else if let Ok(val) = value.parse::<f64>() {
-                                Value::Number(val)
-                            } else if value == "true" || value == "false" {
-                                Value::Boolean(value == "true")
-                            } else {
-                                Value::String(value.to_string())
-                            };
-
-                            (col.to_string(), value)
-                        })
-                        .collect::<HashMap<String, Value>>();
+                        .map(|(row, col)| (col.to_string(), row.clone()))
+                        .collect::<HashMap<String, Token>>();
 
                     value.push(row_values);
                 }
             };
         }
-
-        println!("{:#?}", value);
 
         Ok(value)
     }
