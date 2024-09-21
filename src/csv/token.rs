@@ -99,6 +99,8 @@ impl TryFrom<String> for Line {
 
                     let token = if &string_value == "true" || &string_value == "false" {
                         Token::Boolean(string_value == "true")
+                    } else if string_value.is_empty() {
+                        Token::Null
                     } else {
                         Token::String(string_value)
                     };
@@ -235,5 +237,18 @@ mod tests {
             Token::Number(Number::Float(3.4)),
         ];
         assert_eq!(*second_line, expected);
+    }
+
+    #[test]
+    fn tokenize_empty_values() {
+        let csv_string = ",,,\n,,,";
+        let tokens = Tokenizer::parse_tokens(BufReader::new(csv_string.as_bytes()));
+        assert!(tokens.is_ok());
+        let tokens = tokens.unwrap();
+        assert_eq!(tokens.len(), 2);
+        let first_line = tokens[0].clone();
+        assert_eq!(first_line, vec![Token::Null, Token::Null, Token::Null]);
+        let second_line = tokens[1].clone();
+        assert_eq!(second_line, vec![Token::Null, Token::Null, Token::Null]);
     }
 }
