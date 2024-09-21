@@ -1,10 +1,7 @@
 mod token;
 mod value;
 
-use std::{
-    collections::HashMap,
-    io::{BufRead, BufReader},
-};
+use std::{collections::HashMap, io::BufReader};
 
 use token::{Token, Tokenizer};
 pub use value::Value;

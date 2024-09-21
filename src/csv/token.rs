@@ -35,9 +35,9 @@ pub struct Tokenizer {
 }
 
 #[derive(Debug)]
-struct Line(Vec<Token>);
+struct Record(Vec<Token>);
 
-impl TryFrom<String> for Line {
+impl TryFrom<String> for Record {
     type Error = ParsingError;
 
     fn try_from(value: String) -> Result<Self, Self::Error> {
@@ -109,7 +109,7 @@ impl TryFrom<String> for Line {
             }
         }
 
-        Ok(Line(tokens))
+        Ok(Record(tokens))
     }
 }
 
@@ -129,7 +129,7 @@ impl Tokenizer {
             let line = line.map_err(|_| ParsingError {
                 message: "failed to tokenize buf".to_string(),
             })?;
-            let line: Line = line.try_into()?;
+            let line: Record = line.try_into()?;
             if idx == 0 {
                 line_length = line.0.len()
             }
