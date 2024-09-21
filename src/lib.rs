@@ -21,8 +21,8 @@ impl Parson {
         json_parser.parse()
     }
 
-    // pub fn parse_csv(csv_string: &str) -> ParsonResult<Vec<HashMap<String, CsvValue>>> {
-    //     let csv_parser = CsvParser::new(csv_string.as_bytes())?;
-    //     csv_parser.parse()
-    // }
+    pub fn parse_csv(csv_string: &str) -> ParsonResult<Vec<HashMap<String, CsvValue>>> {
+        let csv_parser = CsvParser::new(csv_string.as_bytes())?;
+        csv_parser.parse()
+    }
 }

@@ -33,7 +33,7 @@ impl CsvParser {
         })
     }
 
-    pub fn parse(&self) -> ParsonResult<Vec<HashMap<String, Token>>> {
+    pub fn parse(&self) -> ParsonResult<Vec<HashMap<String, Value>>> {
         let mut value = vec![];
 
         let mut header: Vec<String> = vec![];
@@ -58,8 +58,8 @@ impl CsvParser {
                     let row_values = line
                         .iter()
                         .zip(&header)
-                        .map(|(row, col)| (col.to_string(), row.clone()))
-                        .collect::<HashMap<String, Token>>();
+                        .map(|(row, col)| (col.to_string(), row.into()))
+                        .collect::<HashMap<String, Value>>();
 
                     value.push(row_values);
                 }
@@ -76,7 +76,7 @@ mod tests {
 
     #[test]
     fn parsing_correctly() {
-        let csv_string = "test1,test2\n1valtest1,1valtest2\n2valtest1,2valtest2";
+        let csv_string = "test1,test2\nvaltest1,valtest2\nvaltest1,valtest2";
 
         let parser = CsvParser::new(csv_string.as_bytes());
 

@@ -14,7 +14,6 @@ pub enum Token {
     Number(Number),
     Null,
     Boolean(bool),
-    Comma,
 }
 
 impl TryFrom<f64> for Token {
