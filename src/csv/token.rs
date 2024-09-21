@@ -1,4 +1,7 @@
-use std::io::{BufRead, BufReader};
+use std::{
+    io::{BufRead, BufReader},
+    iter::Peekable,
+};
 
 use crate::{ParsingError, ParsonResult};
 
@@ -36,6 +39,75 @@ pub struct Tokenizer {
 #[derive(Debug)]
 struct Record(Vec<Token>);
 
+impl Record {
+    pub fn parse_number(
+        iterator: &mut Peekable<impl Iterator<Item = char>>,
+    ) -> ParsonResult<Token> {
+        //parse as number
+        //parse until comma
+        let mut number_string = String::new();
+        for digit in iterator.by_ref() {
+            if digit == ',' {
+                break;
+            }
+            number_string.push(digit);
+        }
+
+        number_string
+            .parse::<f64>()
+            .map_err(|_| ParsingError {
+                message: format!("field with value {number_string} is not a number"),
+            })?
+            .try_into()
+    }
+
+    pub fn parse_string(
+        iterator: &mut Peekable<impl Iterator<Item = char>>,
+    ) -> ParsonResult<Token> {
+        let mut string_value = String::new();
+        for inner_char in iterator.by_ref() {
+            if inner_char == ',' {
+                break;
+            }
+            string_value.push(inner_char);
+        }
+
+        let token = if &string_value == "true" || &string_value == "false" {
+            Token::Boolean(string_value == "true")
+        } else if string_value.is_empty() {
+            Token::Null
+        } else {
+            Token::String(string_value)
+        };
+        Ok(token)
+    }
+
+    pub fn parse_string_with_double_quotes(
+        iterator: &mut Peekable<impl Iterator<Item = char>>,
+    ) -> ParsonResult<Token> {
+        iterator.next();
+        let mut value = String::new();
+        while let Some(inner_char) = iterator.next() {
+            if inner_char == '"' {
+                //peek the next
+                if let Some('"') = iterator.peek() {
+                    iterator.next();
+                } else {
+                    iterator.next();
+                    break;
+                }
+            }
+            value.push(inner_char);
+        }
+        let token = if &value == "true" || &value == "false" {
+            Token::Boolean(value == "true")
+        } else {
+            Token::String(value)
+        };
+        Ok(token)
+    }
+}
+
 impl TryFrom<String> for Record {
     type Error = ParsingError;
 
@@ -45,64 +117,15 @@ impl TryFrom<String> for Record {
         while let Some(char) = iterator.peek() {
             match char {
                 '0'..='9' => {
-                    //parse as number
-                    //parse until comma
-                    let mut number_string = String::new();
-                    for digit in iterator.by_ref() {
-                        if digit == ',' {
-                            break;
-                        }
-                        number_string.push(digit);
-                    }
-
-                    let token: Token = number_string
-                        .parse::<f64>()
-                        .map_err(|_| ParsingError {
-                            message: format!("field with value {number_string} is not a number"),
-                        })?
-                        .try_into()?;
+                    let token = Self::parse_number(&mut iterator)?;
                     tokens.push(token);
                 }
                 '"' => {
-                    //parse as string but can have escaped " with double ""
-
-                    iterator.next();
-                    let mut value = String::new();
-                    while let Some(inner_char) = iterator.next() {
-                        if inner_char == '"' {
-                            //peek the next
-                            if let Some('"') = iterator.peek() {
-                                iterator.next();
-                            } else {
-                                iterator.next();
-                                break;
-                            }
-                        }
-                        value.push(inner_char);
-                    }
-                    let token = if &value == "true" || &value == "false" {
-                        Token::Boolean(value == "true")
-                    } else {
-                        Token::String(value)
-                    };
+                    let token = Self::parse_string_with_double_quotes(&mut iterator)?;
                     tokens.push(token);
                 }
                 _ => {
-                    let mut string_value = String::new();
-                    for inner_char in iterator.by_ref() {
-                        if inner_char == ',' {
-                            break;
-                        }
-                        string_value.push(inner_char);
-                    }
-
-                    let token = if &string_value == "true" || &string_value == "false" {
-                        Token::Boolean(string_value == "true")
-                    } else if string_value.is_empty() {
-                        Token::Null
-                    } else {
-                        Token::String(string_value)
-                    };
+                    let token = Self::parse_string(&mut iterator)?;
                     tokens.push(token);
                 }
             }
@@ -249,5 +272,12 @@ mod tests {
         assert_eq!(first_line, vec![Token::Null, Token::Null, Token::Null]);
         let second_line = tokens[1].clone();
         assert_eq!(second_line, vec![Token::Null, Token::Null, Token::Null]);
+    }
+
+    #[test]
+    fn tokenize_string_that_start_with_number() {
+        let csv_string = "test,test1,test2,test3\n1test,1test1,1test2,1test3";
+        let tokens = Tokenizer::parse_tokens(BufReader::new(csv_string.as_bytes()));
+        assert!(tokens.is_ok());
     }
 }
