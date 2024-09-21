@@ -1,7 +1,4 @@
-use std::{
-    io::{BufRead, BufReader},
-    str::FromStr,
-};
+use std::io::{BufRead, BufReader};
 
 use crate::{ParsingError, ParsonResult};
 
@@ -77,8 +74,6 @@ impl TryFrom<String> for Line {
                             //peek the next
                             if let Some('"') = iterator.peek() {
                                 iterator.next();
-                                value.push('"');
-                                value.push('"');
                             } else {
                                 iterator.next();
                                 break;
@@ -183,6 +178,19 @@ mod tests {
             "".to_string()
         };
         assert_eq!(token_value, "val1".to_string());
+
+        let csv_string = "test1,test2,num1,num2\n\"va\"\"l1\",val2,2,3.4";
+        let tokens = Tokenizer::parse_tokens(BufReader::new(csv_string.as_bytes()));
+        assert!(tokens.is_ok());
+        let tokens = tokens.unwrap();
+        assert_eq!(tokens.len(), 2);
+        let token = tokens[1][0].clone();
+        let token_value = if let Token::String(t) = token {
+            t
+        } else {
+            "".to_string()
+        };
+        assert_eq!(token_value, "va\"l1".to_string());
     }
 
     #[test]
