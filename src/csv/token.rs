@@ -53,12 +53,19 @@ impl Record {
             number_string.push(digit);
         }
 
-        number_string
+        match number_string
             .parse::<f64>()
             .map_err(|_| ParsingError {
                 message: format!("field with value {number_string} is not a number"),
             })?
             .try_into()
+        {
+            Ok(token) => Ok(token),
+            Err(_) => {
+                // should return a string since could not parse it into Token::Number
+                Ok(Token::String(number_string))
+            }
+        }
     }
 
     pub fn parse_string(
