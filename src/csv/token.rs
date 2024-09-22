@@ -123,7 +123,7 @@ impl TryFrom<String> for Record {
         let mut iterator = value.chars().peekable();
         while let Some(char) = iterator.peek() {
             match char {
-                '0'..='9' => {
+                '0'..='9' | '-' | '+' => {
                     let token = Self::parse_number(&mut iterator)?;
                     tokens.push(token);
                 }
