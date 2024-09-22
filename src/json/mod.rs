@@ -1,7 +1,7 @@
 mod token;
 mod value;
 
-use std::{collections::HashMap, iter::Peekable};
+use std::{collections::HashMap, iter::Peekable, str::from_utf8};
 
 use token::{Token, Tokenizer};
 pub use value::Value;
@@ -13,9 +13,16 @@ pub struct JsonParser {
 }
 
 impl JsonParser {
-    pub fn new(json_string: &str) -> ParsonResult<Self> {
+    pub fn new(bytes: &[u8]) -> ParsonResult<Self> {
         Ok(Self {
-            tokens: Tokenizer::new(&mut json_string.chars())?.tokens,
+            tokens: Tokenizer::new(
+                &mut from_utf8(bytes)
+                    .map_err(|_| ParsingError {
+                        message: "not a valid json bytes array".to_string(),
+                    })?
+                    .chars(),
+            )?
+            .tokens,
         })
     }
     pub fn parse(&self) -> ParsonResult<Value> {
@@ -129,7 +136,7 @@ mod tests {
     #[test]
     fn test_parse_correctly() {
         let json_string = r#"{"number": 1, "string": "val", "boolean": true, "null_value": null, "another_json":{"number": 1, "string": "val", "boolean": true, "null_value": null}}"#;
-        let parser = JsonParser::new(json_string).unwrap();
+        let parser = JsonParser::new(json_string.as_bytes()).unwrap();
         let value = parser.parse();
         assert!(value.is_ok());
     }
@@ -137,12 +144,12 @@ mod tests {
     #[test]
     fn test_parse_failure() {
         let json_string = r#"}"number": 1, "string": "val", "boolean": true, "null_value": null, "another_json":{"number": 1, "string": "val", "boolean": true, "null_value": null}}"#;
-        let parser = JsonParser::new(json_string).unwrap();
+        let parser = JsonParser::new(json_string.as_bytes()).unwrap();
         let value = parser.parse();
         assert!(value.is_err());
 
         let json_string = r#"23:4"#;
-        let parser = JsonParser::new(json_string);
+        let parser = JsonParser::new(json_string.as_bytes());
         assert!(parser.is_err());
     }
 }
