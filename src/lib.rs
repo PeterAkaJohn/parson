@@ -3,7 +3,7 @@ use std::collections::HashMap;
 
 use csv::{CsvParser, Value as CsvValue};
 mod json;
-use json::{JsonParser, Value};
+use json::{JsonParser, Value as JsonValue};
 
 #[derive(Debug, Clone)]
 pub struct ParsingError {
@@ -16,12 +16,12 @@ pub type ParsonResult<T> = Result<T, ParsingError>;
 pub struct Parson {}
 
 impl Parson {
-    pub fn parse_json(json_string: &str) -> ParsonResult<Value> {
+    pub fn parse_json(json_string: &str) -> ParsonResult<JsonValue> {
         let json_parser = JsonParser::new(json_string.as_bytes())?;
         json_parser.parse()
     }
 
-    pub fn parse_json_with_bytes(bytes: &[u8]) -> ParsonResult<Value> {
+    pub fn parse_json_with_bytes(bytes: &[u8]) -> ParsonResult<JsonValue> {
         let json_parser = JsonParser::new(bytes)?;
         json_parser.parse()
     }
