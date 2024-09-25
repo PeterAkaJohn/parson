@@ -5,6 +5,7 @@ edition = "2021"
 
 [dependencies]
 criterion = "0.5.1"
+thrift = "0.17.0"
 
 [[bench]]
 name = "csv"

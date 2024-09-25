@@ -1,4 +1,5 @@
 mod csv;
+mod parq;
 use std::collections::HashMap;
 
 use csv::{CsvParser, Value as CsvValue};
